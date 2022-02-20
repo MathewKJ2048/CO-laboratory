@@ -1,0 +1,10 @@
+The binary file generated has a .bin extension
+the file consists of '1's,'0's and '2's
+each command's binary representation is made up of '0' (\u0048) and '1' (\u0049)
+'2' serves as a line seperator between instructions
+
+justification:
+1) allows easier debugging in the initial stage
+2) allows implementation of variable-length instructions in the future
+
+Note that this format can be changed in the future in case of any issues
