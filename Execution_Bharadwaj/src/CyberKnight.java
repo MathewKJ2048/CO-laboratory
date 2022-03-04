@@ -13,7 +13,18 @@ public class CyberKnight{
         int i=Read("Test.txt");
         int j;
         Arrays.fill(D.Mem,(byte)0);
-        for(j=0;j<(i/4);j++){
+        Programs.BubbleSort();
+        System.out.println("Before Bubble sort");
+        for(int k=0;k<32;k++){
+            System.out.println("R"+k+"="+D.R[k]);
+        }
+        for(int k=0;k<400;k=k+4){
+            int z=(D.Mem[k]&0xFF)<<24|(D.Mem[k+1]&0xFF)<<16|(D.Mem[k+2]&0xFF)<<8|(D.Mem[k+3]&0xFF);
+            System.out.println("Memory["+k+":"+(k+3)+"] = "+z);
+        }
+        System.out.println("-------------------------------------------------------------\nAfter Bubble sort");
+        System.out.println(i/4);
+        for(j=0;j<(i/4);j=D.PC/4){
             O.IF();
             O.IDRF();
             O.EXE();
@@ -59,6 +70,7 @@ public class CyberKnight{
             case "0100011" -> "S";
             case "1100011" -> "B";
             case "0110111" -> "U";
+            case "1111111" -> "P";
             default -> "J";
         };
     }
@@ -71,8 +83,12 @@ class Instruction_SET{
             case "S" -> Set_S(s);
             case "B" -> Set_B(s);
             case "U" -> Set_U(s);
+            case "P" -> Set_P(s);
             default -> Set_J(s);
         };
+    }
+    public int Set_P(String s){
+        return 36;
     }
     public int Set_R(String s){
         String sub =s.substring(0,7) +s.substring(17,20);
@@ -175,8 +191,14 @@ class Extract_Reg{
             case "S" -> Reg_S(Reg, s);
             case "B" -> Reg_B(Reg, s);
             case "U" -> Reg_U(Reg, s);
+            case "P" -> Reg_P(Reg,s);
             default -> Reg_J(Reg, s);
         }
+    }
+    public void Reg_P(int[] Reg,String s){
+        Reg[1] = UTIL.toDecimal(s.substring(7,12));
+        Reg[2] = UTIL.toDecimal(s.substring(12,17));
+
     }
     public void Reg_R(int[] Reg,String s){
         Reg[0] = UTIL.toDecimal(s.substring(20,25));
@@ -241,7 +263,7 @@ class Operations{
         int rs2=D.R[IDRF_BUFF[2]];
         int offset=UTIL.toDecimal(S.substring(0,12));
         int offset2=UTIL.toDecimal(S.substring(0,7)+S.substring(20,25));
-        int Bimm=4*UTIL.SignToDecimal(S.charAt(0)+S.charAt(24)+S.substring(1,7)+S.substring(20,24));
+        int Bimm=4*UTIL.SignToDecimal(S.substring(0,1)+S.substring(24,25)+S.substring(1,7)+S.substring(20,24));
         if(op==0){
             D.R[IDRF_BUFF[1]]=rs1+rs2;
             D.PC=D.PC+4;
@@ -404,30 +426,49 @@ class Operations{
             if(rs1==rs2){
                 D.PC=D.PC+Bimm;
             }
+            else{
+                D.PC=D.PC+4;
+            }
+
         }
         else if(op==28){
             if(rs1!=rs2){
                 D.PC=D.PC+Bimm;
+            }
+            else{
+                D.PC=D.PC+4;
             }
         }
         else if(op==29){
             if(rs1<rs2){
                 D.PC=D.PC+Bimm;
             }
+            else{
+                D.PC=D.PC+4;
+            }
         }
         else if(op==30){
             if(rs1>=rs2){
                 D.PC=D.PC+Bimm;
+            }
+            else{
+                D.PC=D.PC+4;
             }
         }
         else if(op==31){
             if(rs1<rs2){
                 D.PC=D.PC+Bimm;
             }
+            else{
+                D.PC=D.PC+4;
+            }
         }
         else if(op==32){
             if(rs1>=rs2){
                 D.PC=D.PC+Bimm;
+            }
+            else{
+                D.PC=D.PC+4;
             }
         }
         else if(op==33){
@@ -438,8 +479,12 @@ class Operations{
             D.R[IDRF_BUFF[1]]=D.PC+4;
             D.PC=D.PC+4*UTIL.SignToDecimal(S.charAt(0)+S.substring(12,20)+S.charAt(11)+S.substring(1,11));
         }
-        else{
+        else if(op==35){
             D.PC=D.PC+4*UTIL.SignToDecimal(S.charAt(0)+S.substring(10,21)+S.charAt(9)+S.substring(1,9)+"000000000000");
+        }
+        else{
+            D.R[IDRF_BUFF[2]]=D.R[IDRF_BUFF[3]];
+            D.PC=D.PC+4;
         }
     }
 }
@@ -454,10 +499,17 @@ class UTIL{
      static int SignToDecimal(String s){
          int sum=0;
          int sum1;
-         for(int i=0;i<s.length();i++){
+         for(int i=1;i<s.length();i++){
              sum=sum*2+s.charAt(i)-'0';
          }
          sum1=sum - (s.charAt(0)-'0')*(int)Math.pow(2,s.length()-1);
          return sum1;
      }
+     static void StoreMem(int mem,int value){
+         CyberKnight.D.Mem[mem]=(byte)(value>>24);
+         CyberKnight.D.Mem[mem+1]=(byte)(value>>16);
+         CyberKnight.D.Mem[mem+2]=(byte)(value>>8);
+         CyberKnight.D.Mem[mem+3]=(byte)(value);
+     }
 }
+

@@ -1,0 +1,25 @@
+PC:0 li $t0,n #n is size of array.  
+PC:4 li $s0,0x10010040
+PC:8	li $s1,1
+PC:12	li $s6,1
+	loop4:
+PC:16			lw $s2,0($s0)
+PC:20			lw $s3,4($s0)
+ 			#Each time we load two integers and compare.
+PC:24			slt $s4,$s2,$s3
+PC:28 		beq $s4,$s6,cont
+			#Based on the values of integers we will either swap the values or we will proceed to next pair.
+		swap:
+PC:32			move $t2,$s2
+PC:36			move $s2,$s3
+PC:40			move $s3,$t2
+
+		cont:
+PC:44			sw $s2,0($s0)
+PC:48			sw $s3,4($s0)
+			#After the operation we will store back the integer pair into the memory.
+PC:52			addi $s1,1
+PC:56			addi $s0,4
+PC:60			bne $s1,$t0,loop4
+PC:64			sub $t0,$t0,$s6
+PC:68			bne $s6,$t0,sort 
