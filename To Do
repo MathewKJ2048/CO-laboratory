@@ -1,9 +1,12 @@
 Basic work division
-1) core logic: compiler, interpreter, assembler, parser etc
+1) core:  
+  a) compiler
+  b) processor
 2) graphical UI
 3) documentation of code and features
 4) report writing
+5) testing
 
 current plan:
-VB - execution
-MKJ - parser/compiler
+VB - processor
+MKJ - UI,compiler
