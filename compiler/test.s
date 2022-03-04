@@ -1,15 +1,9 @@
-a d 
-  aaa   aaaaa   a a a a   aaaa 
+.data
+n: .word 0
+m: .word 50
+l: .byte
+j: .byte
+k: .short
+i: .word p: .word 3
 
-                a a a aaa
-                aaaaa
-                aaaaaa
-                aaa
-                aaa
-        sss
-
-        ddd
-
-    sss
-  asasa   asa 
-d
+.text
