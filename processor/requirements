@@ -1,4 +1,0 @@
-1) public byte[] get_contents_of_register(int register_number)//returns the bits stored in the register in a byte[] array
-   the UI will do the appropriate conversion to render it properly
-   
-2) public byte[] get_contents_of_memory(int memory_id)//similar to above function
