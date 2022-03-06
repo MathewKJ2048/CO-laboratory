@@ -131,6 +131,14 @@ public class Compiler
         {
             System.out.println(l_pc.get(i).address+"|"+l_pc.get(i).contents);
         }
+        
+        //writing file
+        String file = "";
+        for(int i=0;i<l_pc.size();i++)
+        {
+            file+=l_pc.get(i).contents+" ";
+        }
+        Files.write(binary,file.getBytes());
     }
     private void scrub()
     {
@@ -438,7 +446,15 @@ public class Compiler
                     {
                         String dest = sc.next();
                         String src1 = sc.next();
-                        long imm = sc.nextLong();
+                        long imm = 0;
+                        if(token.equals(Constants.LW) && !sc.hasNextLong())
+                        {
+                            String label = sc.next();
+                            int address = get_address_data(label);
+                            if(address == -1)throw new Exception("unidentified label");
+                            imm = address;
+                        }
+                        else imm = sc.nextLong();
                         int dest_add = Constants.address_of(dest);
                         int src1_add = Constants.address_of(src1);
                         if(dest_add == -1 || src1_add == -1)
@@ -455,8 +471,11 @@ public class Compiler
                         }
                         else if(token.equals(Constants.ORI))
                         {
-                            System.out.println("AND IDENTIFIED");
                             l_pc.add(new Instruction(Commands.ori(src1_add,dest_add,imm),code_current));
+                        }
+                        else if(token.equals(Constants.LW))
+                        {
+                            l_pc.add(new Instruction(Commands.lw(src1_add,dest_add,imm),code_current));
                         }
                         code_current+=4;
                     }
@@ -488,6 +507,7 @@ public class Compiler
                             value = address;
                         }
                         if(value == -1)throw new Exception("unidentified label");
+                        value = value-code_current;
                         if(token.equals(Constants.BEQ))
                         {
                             l_pc.add(new Instruction(Commands.beq(src1_add,src2_add,value),code_current));
@@ -523,9 +543,9 @@ public class Compiler
             }
         }
     }
-    public static void test() throws Exception,java.io.IOException
+    public static void main(String args[]) throws Exception
     {
         Compiler c = new Compiler(0,0);
-        c.compile(Paths.get("test.s"),null);
+        c.compile(Paths.get("test.s"),Paths.get("binary.txt"));
     }
 }

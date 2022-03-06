@@ -95,6 +95,7 @@ public class Constants
         l.add(new Command(ADDI,I_TYPE));
         l.add(new Command(ANDI,I_TYPE));
         l.add(new Command(ORI,I_TYPE));
+        l.add(new Command(LW,I_TYPE));
         
         //B-type
         l.add(new Command(BEQ,B_TYPE));
@@ -104,6 +105,11 @@ public class Constants
         l.add(new Command(BGEU,B_TYPE));
         l.add(new Command(BLTU,B_TYPE));
         
+        //J-type
+        l.add(new Command(JAL,J_TYPE));
+        
+        //S-type
+        l.add(new Command(JAL,S_TYPE));
         return l;
     }
     public static boolean is_command(String s)
@@ -127,8 +133,10 @@ public class Constants
     public static final String ANDI = "andi";
     public static final String ORI = "ori";
     public static final String ADDI = "addi";
+    public static final String LW = "lw";
     
     public static final char S_TYPE = 'S';
+    public static final String SW = "sw";
     
     public static final char U_TYPE = 'U';
     
@@ -141,9 +149,6 @@ public class Constants
     public static final String BGEU = "bgeu";
     
     public static final char J_TYPE = 'J';
-    
-    public static final String LW = "lw";
-    public static final String SW = "sw";
     public static final String JAL = "jal";
     
     static class Register
