@@ -322,9 +322,9 @@ public class Compiler
                             long initial_value = sc.nextInt();
                             l_pc.add(new Instruction(Commands.addi(0,5,initial_value),code_current));
                             code_current+=4;
-                            l_pc.add(new Instruction(Commands.lw(5,0,data_current),code_current));
+                            l_pc.add(new Instruction(Commands.sw(5,0,data_current),code_current));
                             code_current+=4;
-                            l_pc.add(new Instruction(Commands.andi(5,0,0),code_current));
+                            l_pc.add(new Instruction(Commands.andi(0,5,0),code_current));
                             code_current+=4;
                         }
                         data_current+=4;
@@ -384,6 +384,8 @@ public class Compiler
             if(Constants.is_command(token))
             {
                 PC+=4;
+                if(Constants.get_type(token) == Constants.PSEUDO_TYPE)System.out.println("warning");
+                if(token.equals(Constants.LI) || token.equals(Constants.MOV)){PC+=4;System.out.println("correction made");}
             }
             else if(Constants.is_label(token))
             {
@@ -615,7 +617,7 @@ public class Compiler
                         else
                         {
                             String label = sc.next();
-                            value = get_address_data(label);
+                            value = get_address_code(label);
                         }
                         if(value == -1 || dest_add == -1)throw new Exception("missing arguments");
                         value-=code_current;
@@ -654,8 +656,8 @@ public class Compiler
                     }
                     else if(token.equals(Constants.MOV))
                     {
-                        String src = sc.next();
                         String dest = sc.next();
+                        String src = sc.next();
                         int src_add = Constants.address_of(src);
                         int dest_add = Constants.address_of(dest);
                         if(src_add == -1 || dest_add == -1)throw new Exception("unrecognized register");

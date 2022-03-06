@@ -3,8 +3,8 @@ public class Commands
 {
     public static String sw(int source_register_address, int destination_register_address, long offset)
     {
-        String opcode = "0000011";
-        String funct3 = "100";
+        String opcode = "0100011";
+        String funct3 = "010";
         String immediate = to_binary(offset,12);
         String source = to_binary(source_register_address,5);
         String destination = to_binary(destination_register_address,5);
@@ -12,9 +12,8 @@ public class Commands
         return s;
     }
     //
-    public static String I_type(int source_register_address, int destination_register_address, long value, String funct3)
+    public static String I_type(int source_register_address, int destination_register_address, long value, String funct3, String opcode)
     {
-        String opcode = "0010011";
         String immediate = to_binary(value,12);
         String source = to_binary(source_register_address,5);
         String destination = to_binary(destination_register_address,5);
@@ -23,31 +22,31 @@ public class Commands
     }
     public static String addi(int source_register_address, int destination_register_address, long value)
     {
-        return I_type(source_register_address,destination_register_address,value,"000");
+        return I_type(source_register_address,destination_register_address,value,"000","0010011");
     }
     public static String ori(int source_register_address, int destination_register_address, long value)
     {
-        return I_type(source_register_address,destination_register_address,value,"110");
+        return I_type(source_register_address,destination_register_address,value,"110","0010011");
     }
     public static String andi(int source_register_address, int destination_register_address, long value)
     {
-        return I_type(source_register_address,destination_register_address,value,"111");
+        return I_type(source_register_address,destination_register_address,value,"111","0010011");
     }
     public static String xori(int source_register_address, int destination_register_address, long value)
     {
-        return I_type(source_register_address,destination_register_address,value,"100");
+        return I_type(source_register_address,destination_register_address,value,"100","0010011");
     }
     public static String slti(int source_register_address, int destination_register_address, long value)
     {
-        return I_type(source_register_address,destination_register_address,value,"010");
+        return I_type(source_register_address,destination_register_address,value,"010","0010011");
     }
     public static String sltiu(int source_register_address, int destination_register_address, long value)
     {
-        return I_type(source_register_address,destination_register_address,value,"011");
+        return I_type(source_register_address,destination_register_address,value,"011","0010011");
     }
     public static String lw(int source_register_address, int destination_register_address, long value)
     {
-        return I_type(source_register_address,destination_register_address,value,"010");
+        return I_type(source_register_address,destination_register_address,value,"010","0000011");
     }
     //
     public static String jal(int destination_register_address, long offset)
@@ -66,7 +65,7 @@ public class Commands
         String source_1 = to_binary(source_register_address_1,5);
         String source_2 = to_binary(source_register_address_2,5);
         String destination = to_binary(destination_register_address,5);
-        String s = funct7+source_1+source_2+funct3+destination+opcode;
+        String s = funct7+source_2+source_1+funct3+destination+opcode;
         return s;
     }
     public static String add(int source_register_address_1,int source_register_address_2, int destination_register_address)
@@ -175,4 +174,9 @@ public class Commands
     {
         for(int i=-4; i<=4; i++)System.out.println(i+":"+to_binary(i,3));
     }*/
+    
+    public static void btest()
+    {
+        for(int i=0;i<10;i++)System.out.println(beq(i,0,0));
+    }
 }

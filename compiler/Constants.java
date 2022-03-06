@@ -90,6 +90,12 @@ public class Constants
         l.add(new Command(SUB,R_TYPE));
         l.add(new Command(AND,R_TYPE));
         l.add(new Command(OR,R_TYPE));
+        l.add(new Command(SLT,R_TYPE));
+        l.add(new Command(SLL,R_TYPE));
+        l.add(new Command(SLTU,R_TYPE));
+        l.add(new Command(XOR,R_TYPE));
+        l.add(new Command(SRL,R_TYPE));
+        l.add(new Command(SRA,R_TYPE));
         
         //I-type
         l.add(new Command(ADDI,I_TYPE));
