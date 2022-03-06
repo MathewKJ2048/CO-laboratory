@@ -1,18 +1,7 @@
 
 public class Commands
 {
-    /*
-    public static String lw(int source_register_address, int destination_register_address, int offset)
-    {
-        String opcode = "0000011";
-        String funct3 = "010";
-        String immediate = to_binary(offset,12);
-        String source = to_binary(source_register_address,5);
-        String destination = to_binary(destination_register_address,5);
-        String s = extract_bits(11,0,immediate,11,0)+source+funct3+destination+opcode;
-        return s;
-    }*/
-    public static String sw(int source_register_address, int destination_register_address, int offset)
+    public static String sw(int source_register_address, int destination_register_address, long offset)
     {
         String opcode = "0000011";
         String funct3 = "100";

@@ -540,6 +540,38 @@ public class Compiler
                         throw new Exception("missing arguments");
                     }
                 }
+                else if(Constants.get_type(token) == Constants.S_TYPE)
+                {
+                    try
+                    {
+                        String src = sc.next();
+                        String dest = sc.next();
+                        int src_add = Constants.address_of(src);
+                        int dest_add = Constants.address_of(dest);
+                        long value = -1;
+                        if(sc.hasNextLong())value = sc.nextLong();
+                        else
+                        {
+                            String label = sc.next();
+                            value = get_address_data(label);
+                        }
+                        if(value == -1 || src_add==-1 || dest_add == -1)throw new Exception("incorrect offset");
+                        if(token.equals(Constants.SW))
+                        {
+                            l_pc.add(new Instruction(Commands.sw(src_add,dest_add,value),code_current));
+                        }
+                        code_current+=4;
+                    }
+                    catch(Exception e)
+                    {
+                        e.printStackTrace();
+                        throw new Exception("missing arguments");
+                    }
+                }
+                else if(Constants.get_type(token) == Constants.J_TYPE)
+                {
+                    
+                }
             }
         }
     }
