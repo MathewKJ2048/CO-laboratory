@@ -9,22 +9,28 @@ public class Compiler
     private int code_current;
     private List<Line> l;
     
-    private int start_code;
-    private int end_code;
-    private int start_data;
-    private int end_data;
-    
-    private class Label_data
+    private class Label
     {
         String name;
         int address;
-        Label_data(String name, int address)
+        Label(String name, int address)
         {
             this.name = name;
             this.address = address;
         }
     }
-    private List<Label_data> l_ld;
+    public int get_address_code(String name)
+    {
+        for(int i=0;i<l_lc.size();i++)if(l_lc.get(i).name.equals(name))return l_lc.get(i).address;
+        return -1;
+    }
+    public int get_address_data(String name)
+    {
+        for(int i=0;i<l_ld.size();i++)if(l_ld.get(i).name.equals(name))return l_ld.get(i).address;
+        return -1;
+    }
+    private List<Label> l_ld;
+    private List<Label> l_lc;
     private class Instruction
     {
         String contents;
@@ -42,14 +48,48 @@ public class Compiler
         String contents;
         int number;
     }
-    Compiler(int memory_start_data, int memory_start_code)
+    
+    private class Source_stream
+    {
+        String stream;
+        List<Integer> numbers;
+        Source_stream()
+        {
+            stream = "";
+            numbers = new ArrayList<Integer>();
+        }
+        void append(String s, int n)
+        {
+            stream = stream+s;
+            for(int i=0;i<s.length();i++)numbers.add(n);
+        }
+        void print()
+        {
+            if(stream.length() == 0)return;
+            System.out.print(numbers.get(0)+"|");
+            System.out.print(stream.charAt(0));
+            for(int i=1;i<stream.length();i++)
+            {
+                if(numbers.get(i-1)!=numbers.get(i))System.out.print("\n"+numbers.get(i)+"|");
+                System.out.print(stream.charAt(i));
+            }
+        }
+    }
+    private Source_stream code_section;
+    private Source_stream data_section;
+    
+    Compiler(int memory_start_data, int memory_start_code) throws Exception
     {
         this.memory_start_data = memory_start_data;
+        if(memory_start_code%4!=0)throw new Exception("Misaligned memory");
         this.memory_start_code = memory_start_code;
         this.data_current = memory_start_data;
         this.code_current = memory_start_code;
         this.l = new ArrayList<Line>();
-        this.l_ld = new ArrayList<Label_data>();
+        this.code_section = new Source_stream();
+        this.data_section = new Source_stream();
+        this.l_ld = new ArrayList<Label>();
+        this.l_lc = new ArrayList<Label>();
         this.l_pc = new ArrayList<Instruction>();
     }
     public void compile(Path source, Path binary) throws Exception,java.io.IOException
@@ -66,15 +106,27 @@ public class Compiler
         }
         print();
         scrub();
-        locate_blocs();
-        System.out.println("data:"+start_data+" to "+end_data);
-        System.out.println("code:"+start_code+" to "+end_code);
         print();
+        
+        locate_blocs();
+        
+        System.out.println("\n\ndata segment:");
+        data_section.print();
+        System.out.println("\n\ncode segment:");
+        code_section.print();
+        
+        System.out.println("-------------------------------------------------------------");
         process_data();
+        process_code();
         for(int i=0;i<l_ld.size();i++)
         {
-            System.out.println(l_ld.get(i).name+"refers to location:"+l_ld.get(i).address);
+            System.out.println(l_ld.get(i).name+" refers to data location:"+l_ld.get(i).address);
         }
+        for(int i=0;i<l_lc.size();i++)
+        {
+            System.out.println(l_lc.get(i).name+" refers to PC location:"+l_lc.get(i).address);
+        }
+        System.out.println("-------------------------------------------------------------");
         for(int i=0;i<l_pc.size();i++)
         {
             System.out.println(l_pc.get(i).address+"|"+l_pc.get(i).contents);
@@ -207,73 +259,41 @@ public class Compiler
     }
     public void locate_blocs() throws Exception
     {
-        List<Integer> d = new ArrayList<Integer>();
-        List<Integer> c = new ArrayList<Integer>();
-        int end = l.get(l.size()-1).number;
+        Source_stream source_full = new Source_stream();
         for(int i=0;i<l.size();i++)
         {
-            if(Constants.DATA.is_contained_in(l.get(i).contents))d.add(l.get(i).number);
-            if(Constants.CODE.is_contained_in(l.get(i).contents))c.add(l.get(i).number);
+            source_full.append(l.get(i).contents+" ",l.get(i).number);
         }
-        if(c.size() == 0)throw new Exception("text section missing");
-        if(c.size() > 1)throw new Exception("multiple text sections");
-        if(d.size() > 1)throw new Exception("multiple data sections");
-        if(d.size() == 0)
+        
+        int data_start = Constants.DATA.start_of_first_instance_in(source_full.stream);
+        int data_end = Constants.DATA.end_of_first_instance_in(source_full.stream);
+        int code_start = Constants.CODE.start_of_first_instance_in(source_full.stream);
+        int code_end = Constants.CODE.end_of_first_instance_in(source_full.stream);
+        if(code_start == -1)throw new Exception("missing code");
+        if(data_start == -1)//no data segment
         {
-            start_data = 0;
-            end_data = 0;
-            start_code = c.get(0);
-            end_code = end;
+            for(int i=code_end;i<source_full.stream.length();i++)code_section.append(source_full.stream.charAt(i)+"",source_full.numbers.get(i));
         }
         else
         {
-            start_data = d.get(0);
-            start_code = c.get(0);
-            if(start_data < start_code)
+            if(data_start < code_start)//data section before code section
             {
-                end_data = start_code;
-                end_code = end;
+                for(int i=data_end;i<code_start;i++)data_section.append(source_full.stream.charAt(i)+"",source_full.numbers.get(i));
+                for(int i=code_end;i<source_full.stream.length();i++)code_section.append(source_full.stream.charAt(i)+"",source_full.numbers.get(i));
             }
-            else if(start_data > start_code)
+            else if(code_start < data_start)// code section before data section
             {
-                end_code = start_data;
-                end_data = end;
+                for(int i=code_end;i<data_start;i++)code_section.append(source_full.stream.charAt(i)+"",source_full.numbers.get(i));
+                for(int i=data_end;i<source_full.stream.length();i++)data_section.append(source_full.stream.charAt(i)+"",source_full.numbers.get(i));
             }
-            else
-            {
-                end_code = start_code;
-                end_data = start_data;
-            }
+            else throw new Exception("Coinciding section error: unable to tell data and code apart");
         }
     }
     
     public void process_data() throws Exception
     {
-        System.out.println("functon called");
-        if(start_data == 0)return;
-        System.out.println("data exists");
-        int i_start;
-        for(i_start = 0;;i_start++)if(l.get(i_start).number == start_data)break;
-        int i_end;
-        for(i_end = 0;;i_end++)if(l.get(i_end).number == end_data)break;
-        
-        for(int i=i_start;i<i_end;i++)
-        {
-            String c = l.get(i).contents;
-            if(i == i_start)
-            {
-                int START = c.indexOf("data");
-                if(START == -1)throw new Exception("Syntax error");
-                c = c.substring(START+4);
-            }
-            else if(i == i_end)
-            {
-                int START = c.indexOf("text");
-                if(START == -1)throw new Exception("Syntax error");
-                c = c.substring(0,START);
-            }
-            
-            Scanner sc = new Scanner(c);
+        if(data_section.stream.equals(""))return;
+            Scanner sc = new Scanner(data_section.stream);
             while(sc.hasNext())
             {
                 String t = sc.next();
@@ -281,7 +301,7 @@ public class Compiler
                 {
                     String label = t.substring(0,t.length()-1);
                     if(!Constants.is_identifier(label))throw new Exception("Incorrect identifier");
-                    this.l_ld.add(new Label_data(label,data_current));
+                    this.l_ld.add(new Label(label,data_current));
                 }
                 else if(t.charAt(0) == Constants.DATATYPE_INITIATOR)
                 {
@@ -292,10 +312,12 @@ public class Compiler
                         if(sc.hasNextInt())
                         {
                             long initial_value = sc.nextInt();
-                            l_pc.add(new Instruction(Commands.lui(5,initial_value),code_current));
-                            code_current++;
-                            l_pc.add(new Instruction(Commands.sw(5,0,data_current),code_current));
-                            code_current++;
+                            l_pc.add(new Instruction(Commands.addi(0,5,initial_value),code_current));
+                            code_current+=4;
+                            l_pc.add(new Instruction(Commands.lw(5,0,data_current),code_current));
+                            code_current+=4;
+                            l_pc.add(new Instruction(Commands.andi(5,0,0),code_current));
+                            code_current+=4;
                         }
                         data_current+=4;
                     }
@@ -323,9 +345,179 @@ public class Compiler
                             throw new Exception("literal missing");
                         }
                     }
+                    else if(type.equals(Constants.ALIGN))
+                    {
+                        try
+                        {
+                            int n = sc.nextInt();
+                            int p = (int)Math.pow(2,n);
+                            while(data_current%p!=0)data_current++;
+                        }
+                        catch(Exception e)
+                        {
+                            throw new Exception("literal missing");
+                        }
+                    }
                     else
                     {
                         throw new Exception("unrecognized type");
+                    }
+                }
+            }
+        
+    }
+    public void process_code() throws Exception
+    {
+        Scanner sc = new Scanner(code_section.stream);
+        int PC = code_current;
+        while(sc.hasNext())
+        {
+            String token = sc.next();
+            if(Constants.is_command(token))
+            {
+                PC+=4;
+            }
+            else if(Constants.is_label(token))
+            {
+                l_lc.add(new Label(token.substring(0,token.length()-1),PC));
+            }
+        }
+        sc = new Scanner(code_section.stream);
+        
+        while(sc.hasNext())
+        {
+            String token = sc.next();
+            System.out.println("---"+token+"---");
+            if(Constants.is_command(token))
+            {
+                System.out.println("COMMAND IDENTIFIED");
+                if(Constants.get_type(token) == Constants.R_TYPE)
+                {
+                    System.out.println("RTYPE IDENTIFIED");
+                    try
+                    {
+                        String dest = sc.next();
+                        String src1 = sc.next();
+                        String src2 = sc.next();
+                        int dest_add = Constants.address_of(dest);
+                        int src1_add = Constants.address_of(src1);
+                        int src2_add = Constants.address_of(src2);
+                        if(dest_add == -1 || src1_add == -1 || src2_add == -1)
+                        {
+                            throw new Exception("arguments missing");
+                        }
+                        if(token.equals(Constants.ADD))
+                        {
+                            l_pc.add(new Instruction(Commands.add(src1_add,src2_add,dest_add),code_current));
+                        }
+                        else if(token.equals(Constants.SUB))
+                        {
+                            l_pc.add(new Instruction(Commands.sub(src1_add,src2_add,dest_add),code_current));
+                        }
+                        else if(token.equals(Constants.AND))
+                        {
+                            System.out.println("AND IDENTIFIED");
+                            l_pc.add(new Instruction(Commands.and(src1_add,src2_add,dest_add),code_current));
+                        }
+                        else if(token.equals(Constants.OR))
+                        {
+                            l_pc.add(new Instruction(Commands.or(src1_add,src2_add,dest_add),code_current));
+                        }
+                        code_current+=4;
+                    }
+                    catch(Exception e)
+                    {
+                        e.printStackTrace();
+                        throw new Exception("missing arguments");
+                    }
+                }
+                else if(Constants.get_type(token) == Constants.I_TYPE)
+                {
+                    System.out.println("ITYPE IDENTIFIED");
+                    try
+                    {
+                        String dest = sc.next();
+                        String src1 = sc.next();
+                        long imm = sc.nextLong();
+                        int dest_add = Constants.address_of(dest);
+                        int src1_add = Constants.address_of(src1);
+                        if(dest_add == -1 || src1_add == -1)
+                        {
+                            throw new Exception("arguments missing");
+                        }
+                        if(token.equals(Constants.ADDI))
+                        {
+                            l_pc.add(new Instruction(Commands.addi(src1_add,dest_add,imm),code_current));
+                        }
+                        else if(token.equals(Constants.ANDI))
+                        {
+                            l_pc.add(new Instruction(Commands.andi(src1_add,dest_add,imm),code_current));
+                        }
+                        else if(token.equals(Constants.ORI))
+                        {
+                            System.out.println("AND IDENTIFIED");
+                            l_pc.add(new Instruction(Commands.ori(src1_add,dest_add,imm),code_current));
+                        }
+                        code_current+=4;
+                    }
+                    catch(Exception e)
+                    {
+                        e.printStackTrace();
+                        throw new Exception("missing arguments");
+                    }
+                }
+                else if(Constants.get_type(token) == Constants.B_TYPE)
+                {
+                    System.out.println("BTYPE IDENTIFIED");
+                    try
+                    {
+                        String src1 = sc.next();
+                        String src2 = sc.next();
+                        long value = -1;
+                        int src1_add = Constants.address_of(src1);
+                        int src2_add = Constants.address_of(src2);
+                        if(src1_add == -1 || src2_add == -1)
+                        {
+                            throw new Exception("arguments missing");
+                        }
+                        if(sc.hasNextLong())value = sc.nextLong();
+                        else
+                        {
+                            String label = sc.next();
+                            int address = get_address_code(label);
+                            value = address;
+                        }
+                        if(value == -1)throw new Exception("unidentified label");
+                        if(token.equals(Constants.BEQ))
+                        {
+                            l_pc.add(new Instruction(Commands.beq(src1_add,src2_add,value),code_current));
+                        }
+                        else if(token.equals(Constants.BNE))
+                        {
+                            l_pc.add(new Instruction(Commands.bne(src1_add,src2_add,value),code_current));
+                        }
+                        else if(token.equals(Constants.BLT))
+                        {
+                            l_pc.add(new Instruction(Commands.blt(src1_add,src2_add,value),code_current));
+                        }
+                        else if(token.equals(Constants.BLTU))
+                        {
+                            l_pc.add(new Instruction(Commands.bltu(src1_add,src2_add,value),code_current));
+                        }
+                        else if(token.equals(Constants.BGE))
+                        {
+                            l_pc.add(new Instruction(Commands.bge(src1_add,src2_add,value),code_current));
+                        }
+                        else if(token.equals(Constants.BGEU))
+                        {
+                            l_pc.add(new Instruction(Commands.bgeu(src1_add,src2_add,value),code_current));
+                        }
+                        code_current+=4;
+                    }
+                    catch(Exception e)
+                    {
+                        e.printStackTrace();
+                        throw new Exception("missing arguments");
                     }
                 }
             }
