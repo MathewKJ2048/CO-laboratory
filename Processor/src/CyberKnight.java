@@ -23,7 +23,6 @@ public class CyberKnight{
             System.out.println("Memory["+k+":"+(k+3)+"] = "+z);
         }
         System.out.println("-------------------------------------------------------------\nAfter Bubble sort");
-        System.out.println(i/4);
         for(j=0;j<(i/4);j=D.PC/4){
             O.IF();
             O.IDRF();
@@ -263,7 +262,7 @@ class Operations{
         int rs2=D.R[IDRF_BUFF[2]];
         int offset=UTIL.toDecimal(S.substring(0,12));
         int offset2=UTIL.toDecimal(S.substring(0,7)+S.substring(20,25));
-        int Bimm=4*UTIL.SignToDecimal(S.substring(0,1)+S.substring(24,25)+S.substring(1,7)+S.substring(20,24));
+        int Bimm=UTIL.SignToDecimal(S.substring(0,1)+S.substring(24,25)+S.substring(1,7)+S.substring(20,24));
         if(op==0){
             D.R[IDRF_BUFF[1]]=rs1+rs2;
             D.PC=D.PC+4;
@@ -477,10 +476,10 @@ class Operations{
         }
         else if(op==34){
             D.R[IDRF_BUFF[1]]=D.PC+4;
-            D.PC=D.PC+4*UTIL.SignToDecimal(S.charAt(0)+S.substring(12,20)+S.charAt(11)+S.substring(1,11));
+            D.PC=D.PC+UTIL.SignToDecimal(S.charAt(0)+S.substring(12,20)+S.charAt(11)+S.substring(1,11));
         }
         else if(op==35){
-            D.PC=D.PC+4*UTIL.SignToDecimal(S.charAt(0)+S.substring(10,21)+S.charAt(9)+S.substring(1,9)+"000000000000");
+            D.PC=D.PC+UTIL.SignToDecimal(S.charAt(0)+S.substring(10,21)+S.charAt(9)+S.substring(1,9)+"000000000000");
         }
         else{
             D.R[IDRF_BUFF[2]]=D.R[IDRF_BUFF[3]];
