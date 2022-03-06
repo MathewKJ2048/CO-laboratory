@@ -95,6 +95,9 @@ public class Constants
         l.add(new Command(ADDI,I_TYPE));
         l.add(new Command(ANDI,I_TYPE));
         l.add(new Command(ORI,I_TYPE));
+        l.add(new Command(SLTIU,I_TYPE));
+        l.add(new Command(SLTI,I_TYPE));
+        l.add(new Command(XORI,I_TYPE));
         l.add(new Command(LW,I_TYPE));
         
         //B-type
@@ -109,7 +112,12 @@ public class Constants
         l.add(new Command(JAL,J_TYPE));
         
         //S-type
-        l.add(new Command(JAL,S_TYPE));
+        l.add(new Command(SW,S_TYPE));
+        
+        //pseudo
+        l.add(new Command(LI,PSEUDO_TYPE));
+        l.add(new Command(MOV,PSEUDO_TYPE));
+        
         return l;
     }
     public static boolean is_command(String s)
@@ -128,10 +136,19 @@ public class Constants
     public static final String SUB = "sub";
     public static final String AND = "and";
     public static final String OR = "or";
+    public static final String SRA = "sra";
+    public static final String SRL = "srl";
+    public static final String XOR = "xor";
+    public static final String SLTU = "sltu";
+    public static final String SLT = "slt";
+    public static final String SLL = "sll";
     
     public static final char I_TYPE = 'I';
     public static final String ANDI = "andi";
     public static final String ORI = "ori";
+    public static final String XORI = "xori";
+    public static final String SLTI = "slti";
+    public static final String SLTIU = "sltiu";
     public static final String ADDI = "addi";
     public static final String LW = "lw";
     
@@ -150,6 +167,10 @@ public class Constants
     
     public static final char J_TYPE = 'J';
     public static final String JAL = "jal";
+    
+    public static final char PSEUDO_TYPE = 'P';
+    public static final String LI = "li";
+    public static final String MOV = "mov";
     
     static class Register
     {

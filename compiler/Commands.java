@@ -33,6 +33,18 @@ public class Commands
     {
         return I_type(source_register_address,destination_register_address,value,"111");
     }
+    public static String xori(int source_register_address, int destination_register_address, long value)
+    {
+        return I_type(source_register_address,destination_register_address,value,"100");
+    }
+    public static String slti(int source_register_address, int destination_register_address, long value)
+    {
+        return I_type(source_register_address,destination_register_address,value,"010");
+    }
+    public static String sltiu(int source_register_address, int destination_register_address, long value)
+    {
+        return I_type(source_register_address,destination_register_address,value,"011");
+    }
     public static String lw(int source_register_address, int destination_register_address, long value)
     {
         return I_type(source_register_address,destination_register_address,value,"010");
@@ -72,6 +84,30 @@ public class Commands
     public static String and(int source_register_address_1,int source_register_address_2, int destination_register_address)
     {
         return R_type(source_register_address_1,source_register_address_2,destination_register_address,"111","0000000");
+    }
+    public static String sra(int source_register_address_1,int source_register_address_2, int destination_register_address)
+    {
+        return R_type(source_register_address_1,source_register_address_2,destination_register_address,"101","0100000");
+    }
+    public static String srl(int source_register_address_1,int source_register_address_2, int destination_register_address)
+    {
+        return R_type(source_register_address_1,source_register_address_2,destination_register_address,"101","0000000");
+    }
+    public static String xor(int source_register_address_1,int source_register_address_2, int destination_register_address)
+    {
+        return R_type(source_register_address_1,source_register_address_2,destination_register_address,"100","0000000");
+    }
+    public static String sltu(int source_register_address_1,int source_register_address_2, int destination_register_address)
+    {
+        return R_type(source_register_address_1,source_register_address_2,destination_register_address,"011","0000000");
+    }
+    public static String slt(int source_register_address_1,int source_register_address_2, int destination_register_address)
+    {
+        return R_type(source_register_address_1,source_register_address_2,destination_register_address,"010","0000000");
+    }
+    public static String sll(int source_register_address_1,int source_register_address_2, int destination_register_address)
+    {
+        return R_type(source_register_address_1,source_register_address_2,destination_register_address,"001","0000000");
     }
     
     public static String B_type(int source_register_address_1,int source_register_address_2, long value, String funct3)

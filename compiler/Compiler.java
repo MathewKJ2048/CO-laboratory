@@ -424,13 +424,37 @@ public class Compiler
                         }
                         else if(token.equals(Constants.AND))
                         {
-                            System.out.println("AND IDENTIFIED");
                             l_pc.add(new Instruction(Commands.and(src1_add,src2_add,dest_add),code_current));
                         }
                         else if(token.equals(Constants.OR))
                         {
                             l_pc.add(new Instruction(Commands.or(src1_add,src2_add,dest_add),code_current));
                         }
+                        else if(token.equals(Constants.SRA))
+                        {
+                            l_pc.add(new Instruction(Commands.sra(src1_add,src2_add,dest_add),code_current));
+                        }
+                        else if(token.equals(Constants.SLL))
+                        {
+                            l_pc.add(new Instruction(Commands.sll(src1_add,src2_add,dest_add),code_current));
+                        }
+                        else if(token.equals(Constants.XOR))
+                        {
+                            l_pc.add(new Instruction(Commands.xor(src1_add,src2_add,dest_add),code_current));
+                        }
+                        else if(token.equals(Constants.SLTU))
+                        {
+                            l_pc.add(new Instruction(Commands.sltu(src1_add,src2_add,dest_add),code_current));
+                        }
+                        else if(token.equals(Constants.SLT))
+                        {
+                            l_pc.add(new Instruction(Commands.slt(src1_add,src2_add,dest_add),code_current));
+                        }
+                        else if(token.equals(Constants.SLL))
+                        {
+                            l_pc.add(new Instruction(Commands.sll(src1_add,src2_add,dest_add),code_current));
+                        }
+                        else throw new Exception("unrecognized command");
                         code_current+=4;
                     }
                     catch(Exception e)
@@ -472,6 +496,18 @@ public class Compiler
                         else if(token.equals(Constants.ORI))
                         {
                             l_pc.add(new Instruction(Commands.ori(src1_add,dest_add,imm),code_current));
+                        }
+                        else if(token.equals(Constants.XORI))
+                        {
+                            l_pc.add(new Instruction(Commands.xori(src1_add,dest_add,imm),code_current));
+                        }
+                        else if(token.equals(Constants.SLTI))
+                        {
+                            l_pc.add(new Instruction(Commands.slti(src1_add,dest_add,imm),code_current));
+                        }
+                        else if(token.equals(Constants.SLTIU))
+                        {
+                            l_pc.add(new Instruction(Commands.sltiu(src1_add,dest_add,imm),code_current));
                         }
                         else if(token.equals(Constants.LW))
                         {
@@ -570,7 +606,64 @@ public class Compiler
                 }
                 else if(Constants.get_type(token) == Constants.J_TYPE)
                 {
-                    
+                    try
+                    {
+                        String dest = sc.next();
+                        int dest_add = Constants.address_of(dest);
+                        long value = -1;
+                        if(sc.hasNextLong())value = sc.nextLong();
+                        else
+                        {
+                            String label = sc.next();
+                            value = get_address_data(label);
+                        }
+                        if(value == -1 || dest_add == -1)throw new Exception("missing arguments");
+                        value-=code_current;
+                        if(token.equals(Constants.JAL))
+                        {
+                            l_pc.add(new Instruction(Commands.jal(dest_add,value),code_current));
+                        }
+                        code_current+=4;
+                    }
+                    catch(Exception e)
+                    {
+                        e.printStackTrace();
+                        throw new Exception("missing arguments");
+                    }
+                }
+                else if(Constants.get_type(token) == Constants.PSEUDO_TYPE)
+                {
+                    if(token.equals(Constants.LI))
+                    {
+                        try
+                        {
+                            String reg = sc.next();
+                            long val = sc.nextInt();
+                            int reg_add = Constants.address_of(reg);
+                            if(reg_add == -1)throw new Exception("unrecognized register");
+                            l_pc.add(new Instruction(Commands.andi(0,reg_add,0),code_current));
+                            code_current+=4;
+                            l_pc.add(new Instruction(Commands.addi(0,reg_add,val),code_current));
+                            code_current+=4;
+                        }
+                        catch(Exception e)
+                        {
+                            e.printStackTrace();
+                            throw new Exception("missing arguments");
+                        }
+                    }
+                    else if(token.equals(Constants.MOV))
+                    {
+                        String src = sc.next();
+                        String dest = sc.next();
+                        int src_add = Constants.address_of(src);
+                        int dest_add = Constants.address_of(dest);
+                        if(src_add == -1 || dest_add == -1)throw new Exception("unrecognized register");
+                        l_pc.add(new Instruction(Commands.andi(0,dest_add,0),code_current));
+                        code_current+=4;
+                        l_pc.add(new Instruction(Commands.add(src_add,dest_add,dest_add),code_current));
+                        code_current+=4;
+                    }
                 }
             }
         }
@@ -578,6 +671,6 @@ public class Compiler
     public static void main(String args[]) throws Exception
     {
         Compiler c = new Compiler(0,0);
-        c.compile(Paths.get("test.s"),Paths.get("binary.txt"));
+        c.compile(Paths.get("test.s"),Paths.get("Test.txt"));
     }
 }
