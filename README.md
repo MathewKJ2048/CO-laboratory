@@ -5,3 +5,6 @@ Instructions for use:
 3) A binary file called Test.txt is generated
 4) Execute CyberKnights.java(Processor) after placing the file in the root folder
 5) the final values of all the registers and memory is printed
+
+Requirements:
+Java version 17
