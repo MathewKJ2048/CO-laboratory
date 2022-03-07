@@ -1,12 +1,27 @@
 Basic work division
-1) core:  
-  a) compiler
-  b) processor
-2) graphical UI
-3) documentation of code and features
-4) report writing
-5) testing
+1) compiler
+2) processor
+3) graphical UI
+4) testing
+5) documentation of code and features
 
-current plan:
-VB - processor
-MKJ - UI,compiler
+Compiler:
+1) incorporate all real instructions
+2) make syntax MIPS-like ( allow , and optional immediates)
+3) pseudo-instructions (inc,dec,inci,deci)
+4) comipler directives (origin of PC, origin of data, jump to main:, rename register)
+5) foreign language plugins
+
+processor:
+1) pipelining
+2) data forwarding
+3) stalls and IPC
+
+UI:
+1) display memory
+2) display registers
+3) display code
+4) step-wise execution
+5) switching base (binary, hexadecimal, ASCII, decimal, octal)
+6) pipelining/data forwarding enable/disable
+
