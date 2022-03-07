@@ -1,7 +1,7 @@
 The binary file generated has a .bin extension
-the file consists of '1's,'0's and '2's
+the file consists of '1's,'0's and ' 's (UTF-8)
 each command's binary representation is made up of '0' (\u0048) and '1' (\u0049)
-line_separator() serves as a line separator between instructions (line_separator() needs to be used since different systems have different separators)
+' ' serves as a separator between instructions
 
 justification:
 1) allows easier debugging in the initial stage
