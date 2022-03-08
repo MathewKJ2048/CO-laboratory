@@ -6,11 +6,13 @@ Basic work division
 5) documentation of code and features
 
 Compiler:
-1) incorporate all real instructions
+1) incorporate all real instructions (lw lh asciiz etc in data section)
 2) make syntax MIPS-like ( allow , and optional immediates)
 3) pseudo-instructions (inc,dec,inci,deci)
 4) comipler directives (origin of PC, origin of data, jump to main:, rename register)
-5) foreign language plugins
+5) handle syntax errors properly (catch exceptions, point to line number)
+6) syscalls
+7) foreign language plugins
 
 processor:
 1) pipelining
