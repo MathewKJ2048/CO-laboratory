@@ -8,7 +8,7 @@ Basic work division
 compiler:
 1) incorporate all real instructions (lw lh asciiz etc in data section)
 2) make syntax MIPS-like ( allow , and optional immediates)
-3) pseudo-instructions (inc,dec,inci,deci)
+3) pseudo-instructions (inc,dec,inci,deci,syscalls)
 4) comipler directives (origin of PC, origin of data, jump to main:, rename register)
 5) handle syntax errors properly (catch exceptions, point to line number)
 6) syscalls
@@ -18,6 +18,7 @@ processor:
 1) pipelining
 2) data forwarding
 3) stalls and IPC
+4) syscalls
 
 GUI:
 1) display memory
