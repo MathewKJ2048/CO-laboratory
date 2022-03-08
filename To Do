@@ -1,11 +1,11 @@
 Basic work division
 1) compiler
 2) processor
-3) graphical UI
+3) GUI
 4) testing
 5) documentation of code and features
 
-Compiler:
+compiler:
 1) incorporate all real instructions (lw lh asciiz etc in data section)
 2) make syntax MIPS-like ( allow , and optional immediates)
 3) pseudo-instructions (inc,dec,inci,deci)
@@ -19,11 +19,22 @@ processor:
 2) data forwarding
 3) stalls and IPC
 
-UI:
+GUI:
 1) display memory
 2) display registers
 3) display code
 4) step-wise execution
-5) switching base (binary, hexadecimal, ASCII, decimal, octal)
+5) switching base (binary, hexadecimal, decimal, octal)*(signed, unsigned) (ASCII)
 6) pipelining/data forwarding enable/disable
 
+testing:
+1) all commands (previously untested instructions, data section instructions)
+2) IPC
+3) stalls
+4) pipelining
+
+documentation:
+1) README.md
+2) list of pseudo-instructions
+3) syntax variations from MIPS
+4) how to write plugins
