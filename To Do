@@ -27,6 +27,8 @@ GUI:
 4) step-wise execution
 5) switching base (binary, hexadecimal, decimal, octal)*(signed, unsigned) (ASCII)
 6) pipelining/data forwarding enable/disable
+7) console
+8) compilation error message
 
 testing:
 1) all commands (previously untested instructions, data section instructions)
