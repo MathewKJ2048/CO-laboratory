@@ -12,7 +12,8 @@ compiler:
 4) comipler directives (origin of PC, origin of data, jump to main:, rename register)
 5) handle syntax errors properly (catch exceptions, point to line number)
 6) syscalls
-7) foreign language plugins
+7) escape sequence handling for strings
+8) foreign language plugins
 
 processor:
 1) pipelining
