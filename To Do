@@ -13,7 +13,8 @@ compiler:
 5) handle syntax errors properly (catch exceptions, point to line number)
 6) syscalls
 7) escape sequence handling for strings
-8) foreign language plugins
+8) check for redundant use of labels
+9) foreign language plugins
 
 processor:
 1) pipelining
