@@ -14,6 +14,7 @@ compiler:
 6) syscalls
 7) escape sequence handling for strings
 8) check for redundant use of labels
+9) jummp to main
 9) foreign language plugins
 
 processor:
