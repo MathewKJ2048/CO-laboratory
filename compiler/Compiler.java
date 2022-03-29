@@ -58,8 +58,8 @@ public class Compiler
     
     private class Source_stream
     {
-        StringBuilder stream;
-        List<Integer> numbers;
+        private StringBuilder stream;
+        private List<Integer> numbers;
         Source_stream()
         {
             stream = new StringBuilder();
@@ -73,6 +73,10 @@ public class Compiler
         String stream()
         {
             return this.stream.toString();
+        }
+        int get_number(int i)
+        {
+            return numbers.get(i);
         }
         void log()
         {
@@ -304,34 +308,33 @@ public class Compiler
             else throw new Exception("Coinciding section error: unable to tell data and code apart");
         }
     }
-    
     private void process_data() throws Exception
     {
         transcript.append("\n"+"data section: ");
         if(data_section.stream.length()==0)return;
-            Scanner sc = new Scanner(data_section.stream());
-            sc.useDelimiter("("+Syntax.WHITESPACE+")+");
+            Parser sc = new Parser(data_section.stream());
             while(sc.hasNext())
             {
                 String t = sc.next();
+                if(t.equals(""))continue;
                 transcript.append("\n>").append(t);
-                if(Syntax.LABEL_TERMINATOR.equals(""+t.charAt(t.length()-1)))
+                if(Syntax.is_label(t))
                 {
                     String label = t.substring(0,t.length()-1);
-                    if(!Syntax.is_identifier(label))throw new Exception("Incorrect identifier");
+                    if(!Syntax.is_valid_label(label))throw new Exception("Incorrect identifier for label in line "+data_section.get_number(sc.start()));
                     transcript.append("\n" + "label identified: ").append(label);
                     this.l_ld.add(new Label(label, data_current));
                 }
-                else if(Syntax.DATATYPE_INITIATOR.equals(""+t.charAt(0)))
+                else if(Syntax.is_data_type(t))
                 {
                     String type = t.substring(1);// leading . is removed
                     if(Syntax.WORD.contains(type))
                     {
-                        if(data_current%4!=0)throw new Exception("misaligned memory");
+                        if(data_current%4!=0)throw new Exception("misaligned memory in line"+data_section.get_number(sc.start()));
                         transcript.append("\n").append(Syntax.WORD.words[0]).append(" allocated");
-                        if(sc.hasNextInt())
+                        if(sc.hasNextLong())
                         {
-                            long initial_value = sc.nextInt();
+                            long initial_value = sc.nextLong();
                             l_pc.add(new Instruction(Binary.addi(0, 5, initial_value), code_current, Syntax.WORD.words[0] + " " + Syntax.ADDI.words[0]));
                             code_current+=4;
                             l_pc.add(new Instruction(Binary.sw(5, 0, data_current), code_current, Syntax.WORD.words[0] + " " + Syntax.SW.words[0]));
@@ -346,9 +349,9 @@ public class Compiler
                     {
                         //memory is always aligned for BYTE since it is byte addressable memory
                         transcript.append("\n").append(Syntax.BYTE.words[0]).append(" allocated");
-                        if(sc.hasNextInt())
+                        if(sc.hasNextLong())
                         {
-                            long initial_value = sc.nextInt();
+                            long initial_value = sc.nextLong();
                             l_pc.add(new Instruction(Binary.addi(0, 5, initial_value), code_current, Syntax.BYTE.words[0] + " " + Syntax.ADDI.words[0]));
                             code_current+=4;
                             l_pc.add(new Instruction(Binary.sb(5, 0, data_current), code_current, Syntax.BYTE.words[0] + " " + Syntax.SB.words[0]));
@@ -361,11 +364,11 @@ public class Compiler
                     }
                     else if(Syntax.SHORT.contains(type))
                     {
-                        if(data_current%2!=0)throw new Exception("misaligned memory");
+                        if(data_current%2!=0)throw new Exception("misaligned memory in line "+data_section.get_number(sc.start()));
                         transcript.append("\n").append(Syntax.SHORT.words[0]).append(" allocated");
-                        if(sc.hasNextInt())
+                        if(sc.hasNextLong())
                         {
-                            long initial_value = sc.nextInt();
+                            long initial_value = sc.nextLong();
                             l_pc.add(new Instruction(Binary.addi(0, 5, initial_value), code_current, Syntax.SHORT.words[0] + " " + Syntax.ADDI.words[0]));
                             code_current+=4;
                             l_pc.add(new Instruction(Binary.sh(5, 0, data_current), code_current, Syntax.SHORT.words[0] + " " + Syntax.SH.words[0]));
@@ -380,27 +383,27 @@ public class Compiler
                     {
                         try
                         {
-                            int n = sc.nextInt();
+                            int n = (int)sc.nextLong();
                             data_current+=n;
                             transcript.append("\n").append(n).append(" bytes of space in memory allocated");
                         }
                         catch(Exception e)
                         {
-                            throw new Exception("literal missing");
+                            throw new Exception(e.getMessage()+"\nliteral missing in line "+data_section.get_number(sc.start()));
                         }
                     }
                     else if(Syntax.ALIGN.contains(type))
                     {
                         try
                         {
-                            int n = sc.nextInt();
+                            int n = (int)sc.nextLong();
                             int p = (int)Math.pow(2,n);
                             while(data_current%p!=0)data_current++;
                             transcript.append("\n" + "data pointer aligned to nearest multiple of 2^").append(n);
                         }
                         catch(Exception e)
                         {
-                            throw new Exception("literal missing");
+                            throw new Exception(e.getMessage()+"\nliteral missing in line "+data_section.get_number(sc.start()));
                         }
                     }
                     else if(Syntax.ASCII.contains(type)||Syntax.ASCIIZ.contains(type))
@@ -427,37 +430,36 @@ public class Compiler
                         }
                         catch(Exception e)
                         {
-                            throw new Exception("string not rendered correctly");
+                            throw new Exception(e.getMessage()+"\nstring not rendered correctly in line "+data_section.get_number(sc.start()));
                         }
                     }
-                    else
-                    {
-                        throw new Exception("unrecognized type");
-                    }
+                    else throw new Exception("unrecognized type in line "+data_section.get_number(sc.start()));
                 }
+                else throw new Exception("Unrecognized token in line "+data_section.get_number(sc.start()));
             }
         transcript.append("\n");
     }
-    private void process_code() throws Exception
+    private void identify_code_labels() throws Exception
     {
-        transcript.append("\n"+"code section: ");
-        Scanner sc = new Scanner(code_section.stream());
-        sc.useDelimiter("("+Syntax.WHITESPACE+")+");
+        Parser sc = new Parser(code_section.stream());
         int PC = code_current;
         while(sc.hasNext())
         {
             String token = sc.next();
+            if(token.equals(""))continue;
             if(Syntax.is_command(token))
             {
                 PC+=Syntax.get_n_of_command(token)*4;
             }
             else if(Syntax.is_label(token))
             {
+                if(!Syntax.is_valid_label(token))throw new Exception("Incorrect identifier for label in line "+code_section.get_number(sc.start()));
                 l_lc.add(new Label(token.substring(0, token.length() - 1), PC));
                 transcript.append("\n" + "label identified: ").append(token);
             }
         }
-        check_clashing_labels();
+    }
+    private void jump_to_main() throws Exception {
         boolean main_present = false;
         for (Label item : l_lc) {
             if (Syntax.MAIN.contains(item.name)) {
@@ -468,32 +470,47 @@ public class Compiler
             }
         }
         if(!main_present)transcript.append("\nWARNING: no main label found");
-
-        sc = new Scanner(code_section.stream());
-        sc.useDelimiter("(("+Syntax.WHITESPACE+")*"+Syntax.ARGUMENT_SEPARATOR+"("+Syntax.WHITESPACE+")*)|("+Syntax.WHITESPACE+")+");
+    }
+    private void process_code() throws Exception
+    {
+        transcript.append("\n"+"code section: ");
+        identify_code_labels();
+        check_clashing_labels();
+        jump_to_main();
+        Parser sc = new Parser(code_section.stream());
         while(sc.hasNext())
         {
             String token = sc.next();
+            if(token.equals(""))continue;
             transcript.append("\n").append(">").append(token);
             if(Syntax.is_command(token))
             {
+                //command cannot be followed by ,  // TODO replace missing with improper in general exception
+                if(sc.is_next_argument())throw new Exception("unexpected '"+Syntax.ARGUMENT_SEPARATOR+"' in line "+code_section.numbers.get(sc.start()));
                 if(Syntax.get_input_type_of_command(token)==Syntax.RRR)
                 {
                     try
                     {
+                        // destination register
                         String dest = sc.next();
-                        String src1 = sc.next();
-                        String src2 = sc.next();
-                        transcript.append("\nsource register 1: ").append(src1);
-                        transcript.append("\nsource register 2: ").append(src2);
                         transcript.append("\ndestination register: ").append(dest);
                         int dest_add = Syntax.address_of_register(dest);
+                        if(dest_add == -1)throw new Exception("destination register '"+dest+"' in line "+code_section.numbers.get(sc.start())+" does not exist");
+                        // source register 1
+                        if(!sc.is_next_argument())throw new Exception("missing argument in line "+code_section.numbers.get(sc.start()));
+                        String src1 = sc.next();
+                        transcript.append("\nsource register 1: ").append(src1);
                         int src1_add = Syntax.address_of_register(src1);
+                        if(src1_add == -1)throw new Exception("source register 1 '"+src1+"' in line "+code_section.numbers.get(sc.start())+" does not exist");
+                        // source register 2
+                        if(!sc.is_next_argument())throw new Exception("missing argument in line "+code_section.numbers.get(sc.start()));
+                        String src2 = sc.next();
+                        transcript.append("\nsource register 2: ").append(src2);
                         int src2_add = Syntax.address_of_register(src2);
-                        if(dest_add == -1 || src1_add == -1 || src2_add == -1)
-                        {
-                            throw new Exception("arguments incorrect, registers do not exist");
-                        }
+                        if(src2_add == -1)throw new Exception("source register 2 '"+src2+"' in line "+code_section.numbers.get(sc.start())+" does not exist");
+
+                        if(sc.is_next_argument())throw new Exception("too many arguments for "+token+" in line "+code_section.numbers.get(sc.start()));
+
                         // add sub and or xor sll (sla) srl sra slt sltu sgt sgtu
                         if(Syntax.ADD.contains(token))
                         {
@@ -543,16 +560,15 @@ public class Compiler
                         {
                             l_pc.add(new Instruction(Binary.sltu(src2_add, src1_add, dest_add), code_current, Syntax.SGTU.words[0]+" "+Syntax.SLTU.words[0]));
                         }
-                        else throw new Exception("command type mismatch");
+                        else throw new Exception("command type mismatch in line "+code_section.numbers.get(sc.start()));
                         code_current+=4*Syntax.get_n_of_command(token);
                     }
                     catch(Exception e)
                     {
-                        transcript.append("\nERROR: ").append(e.getMessage());
-                        throw new Exception("missing arguments");
+                        throw new Exception(e.getMessage()+"\nmissing arguments in line "+code_section.numbers.get(sc.start()));
                     }
                 }
-                else if(Syntax.get_input_type_of_command(token)==Syntax.RRi)
+                else if(Syntax.get_input_type_of_command(token)==Syntax.RRi) // TODO rewrite
                 {
                     try
                     {
@@ -672,16 +688,15 @@ public class Compiler
                         {
                             l_pc.add(new Instruction(Binary.bltu(src2_add, src1_add, value-code_current), code_current, Syntax.BGTU.words[0]+" "+Syntax.BLTU.words[0]));
                         }
-                        else throw new Exception("command type mismatch");
+                        else throw new Exception("command type mismatch in line "+code_section.numbers.get(sc.start()));
                         code_current+=4*Syntax.get_n_of_command(token);
                     }
                     catch(Exception e)
                     {
-                        e.printStackTrace();
-                        throw new Exception("missing arguments");
+                        throw new Exception(e.getMessage()+"\nmissing arguments in line "+code_section.numbers.get(sc.start()));
                     }
                 }
-                else if(Syntax.get_input_type_of_command(token)==Syntax.Ri_R_)
+                else if(Syntax.get_input_type_of_command(token)==Syntax.Ri_R_) // TODO rewrite
                 {
                     try
                     {
@@ -760,26 +775,31 @@ public class Compiler
                         {
                             l_pc.add(new Instruction(Binary.sw(r_o_add, r_c_add, immediate), code_current, Syntax.SH.words[0]));
                         }
-                        else throw new Exception("command type mismatch");
+                        else throw new Exception("command type mismatch in line "+code_section.numbers.get(sc.start()));
                         code_current+=4*Syntax.get_n_of_command(token);
                     }
                     catch(Exception e)
                     {
-                        transcript.append("\nERROR: ").append(e.getMessage());
-                        throw new Exception("missing arguments");
+                        throw new Exception(e.getMessage()+"\nmissing arguments in line"+code_section.numbers.get(sc.start()));
                     }
                 }
                 else if(Syntax.get_input_type_of_command(token)==Syntax.RR)
                 {
                     try
                     {
+                        //destination register
                         String dest = sc.next();
-                        String source = sc.next();
-                        transcript.append("\n source register: ").append(source);
-                        transcript.append("\n destination register: ").append(dest);
+                        transcript.append("\ndestination register: ").append(dest);
                         int dest_add = Syntax.address_of_register(dest);
-                        int src_add = Syntax.address_of_register(source);
-                        if(dest_add==-1||src_add==-1)throw new Exception("no such register");
+                        if(dest_add == -1)throw new Exception("destination register '"+dest+"' in line "+code_section.numbers.get(sc.start())+" does not exist");
+                        //source register
+                        if(!sc.is_next_argument())throw new Exception("missing argument in line "+code_section.numbers.get(sc.start()));
+                        String src = sc.next();
+                        transcript.append("\nsource register: ").append(src);
+                        int src_add = Syntax.address_of_register(src);
+                        if(src_add == -1)throw new Exception("source register 2 '"+src+"' in line "+code_section.numbers.get(sc.start())+" does not exist");
+
+                        if(sc.is_next_argument())throw new Exception("too many arguments for "+token+" in line "+code_section.numbers.get(sc.start()));
                         // (inc dec) (mv swp) (not neg) (seqz snez sltz sgtz)
                         if(Syntax.INC.contains(token))
                         {
@@ -828,16 +848,15 @@ public class Compiler
                             l_pc.add(new Instruction(Binary.xor(src_add, dest_add, dest_add), code_current+4,Syntax.SWP.words[0]+" "+Syntax.XOR.words[0]));
                             l_pc.add(new Instruction(Binary.xor(dest_add, src_add, src_add), code_current+8,Syntax.SWP.words[0]+" "+Syntax.XOR.words[0]));
                         }
-                        else throw new Exception("command type mismatch");
+                        else throw new Exception("command type mismatch in line "+code_section.numbers.get(sc.start()));
                         code_current+=4*Syntax.get_n_of_command(token);
                     }
                     catch(Exception e)
                     {
-                        transcript.append("\nERROR: ").append(e.getMessage());
-                        throw new Exception("missing arguments");
+                        throw new Exception(e.getMessage()+"\nmissing arguments in line "+code_section.numbers.get(sc.start()));
                     }
                 }
-                else if(Syntax.get_input_type_of_command(token)==Syntax.Ri)
+                else if(Syntax.get_input_type_of_command(token)==Syntax.Ri) // TODO rewrite
                 {
                     try
                     {
@@ -918,26 +937,26 @@ public class Compiler
                         {
                             l_pc.add(new Instruction(Binary.auipc(src_add,value), code_current,Syntax.AUIPC.words[0]));
                         }
-                        else throw new Exception("command type mismatch");
+                        else throw new Exception("command type mismatch in line "+code_section.numbers.get(sc.start()));
                         code_current+=4*Syntax.get_n_of_command(token);
                     }
                     catch(Exception e)
                     {
                         transcript.append("\nERROR: ").append(e.getMessage());
-                        throw new Exception("missing arguments");
+                        throw new Exception(e.getMessage()+"\nmissing arguments in line "+code_section.numbers.get(sc.start()));
                     }
                 }
                 else if(Syntax.get_input_type_of_command(token)==Syntax.R)
                 {
                     try
                     {
+                        //register
                         String r = sc.next();
                         transcript.append("\nregister: ").append(r);
                         int r_add = Syntax.address_of_register(r);
-                        if(r_add == -1)
-                        {
-                            throw new Exception("arguments missing");
-                        }
+                        if(r_add == -1)throw new Exception("register '"+r+"' in line "+code_section.numbers.get(sc.start())+" does not exist");
+
+                        if(sc.is_next_argument())throw new Exception("too many arguments for "+token+" in line "+code_section.numbers.get(sc.start()));
                         // clr noti jr
                         if(Syntax.CLR.contains(token))
                         {
@@ -951,15 +970,15 @@ public class Compiler
                         {
                             l_pc.add(new Instruction(Binary.jalr(r_add,0,0), code_current,Syntax.JR.words[0]+" "+Syntax.JALR.words[0]));
                         }
+                        else throw new Exception("command type mismatch in line "+code_section.numbers.get(sc.start()));
                         code_current+=4*Syntax.get_n_of_command(token);
                     }
                     catch(Exception e)
                     {
-                        transcript.append("\nERROR: ").append(e.getMessage());
-                        throw new Exception("missing arguments");
+                        throw new Exception(e.getMessage()+"\nmissing arguments in line "+code_section.numbers.get(sc.start()));
                     }
                 }
-                else if(Syntax.get_input_type_of_command(token)==Syntax.i)
+                else if(Syntax.get_input_type_of_command(token)==Syntax.i) // TODO rewrite
                 {
                     try
                     {
@@ -986,26 +1005,25 @@ public class Compiler
                                 transcript.append(" (code)");
                                 value = value_c;
                             }
-                            else throw new Exception("multiple labels matching");
+                            else throw new Exception("multiple labels matching");//should be unreachable
                         }
                         if(Syntax.J.contains(token))
                         {
                             l_pc.add(new Instruction(Binary.jal(0,value-code_current), code_current,Syntax.J.words[0]+" "+Syntax.JAL.words[0]));
                         }
-                        else throw new Exception("command type mismatch");
+                        else throw new Exception("command type mismatch in line "+code_section.numbers.get(sc.start()));
                         code_current+=4*Syntax.get_n_of_command(token);
                     }
                     catch(Exception e)
                     {
-                        transcript.append("\nERROR: ").append(e.getMessage());
-                        throw new Exception("missing arguments");
+                        throw new Exception(e.getMessage()+"missing arguments in line "+code_section.numbers.get(sc.start()));
                     }
                 }
                 else if(Syntax.get_input_type_of_command(token)==Syntax.$)
                 {
                     try
                     {
-                        // nop
+                        // nop ret
                         if(Syntax.NOP.contains(token))
                         {
                             l_pc.add(new Instruction(Binary.addi(0,0,0), code_current,Syntax.NOP.words[0]+" "+Syntax.ADDI.words[0]));
@@ -1014,16 +1032,15 @@ public class Compiler
                         {
                             l_pc.add(new Instruction(Binary.jalr(1,0,0), code_current,Syntax.RET.words[0]+" "+Syntax.JALR.words[0]));
                         }
-                        else throw new Exception("command type mismatch");
+                        else throw new Exception("command type mismatch in line "+code_section.numbers.get(sc.start()));
                         code_current+=4*Syntax.get_n_of_command(token);
                     }
                     catch(Exception e)
                     {
-                        transcript.append("\nERROR: ").append(e.getMessage());
-                        throw new Exception("missing arguments");
+                        throw new Exception(e.getMessage()+"\nmissing arguments in line "+code_section.numbers.get(sc.start()));
                     }
                 }
-                else if(Syntax.get_input_type_of_command(token)==Syntax.POLY)
+                else if(Syntax.get_input_type_of_command(token)==Syntax.POLY) // TODO write
                 {
                     if(Syntax.JAL.contains(token))//TODO fill this up
                     {
@@ -1033,12 +1050,12 @@ public class Compiler
                     {
                         // r or r,i or r,i(r)
                     }
-                    else throw new Exception("command type mismatch");
+                    else throw new Exception("command type mismatch in line "+code_section.numbers.get(sc.start()));
                     code_current+=4*Syntax.get_n_of_command(token);
                 }
             }
             else if(Syntax.is_label(token))transcript.append("\ncode label");
-            else throw new Exception("unrecognized token");
+            else throw new Exception("unrecognized token in line "+code_section.numbers.get(sc.start()));
         }
     }
 

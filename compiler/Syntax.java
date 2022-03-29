@@ -63,6 +63,7 @@ public class Syntax
     public static final String ARGUMENT_SEPARATOR = ",";
     public static final String IMMEDIATE_OPEN = "(";
     public static final String IMMEDIATE_CLOSE = ")";
+    public static final String IMMEDIATE_SEPARATOR = "_";
     //
     public static final Keyword DATA = new Keyword(new String[]{DATATYPE_INITIATOR+"data"});
     public static final Keyword CODE = new Keyword(new String[]{DATATYPE_INITIATOR+"code",DATATYPE_INITIATOR+"text"});
@@ -137,8 +138,8 @@ public class Syntax
     public static final Keyword LI = new Keyword(new String[]{"li"});
     public static final Keyword MV = new Keyword(new String[]{"mv"});
     public static final Keyword SWP = new Keyword(new String[]{"swp"});
-    public static final Keyword DEC = new Keyword(new String[]{"inc"});
-    public static final Keyword INC = new Keyword(new String[]{"dec"});
+    public static final Keyword DEC = new Keyword(new String[]{"dec"});
+    public static final Keyword INC = new Keyword(new String[]{"inc"});
     public static final Keyword NEG = new Keyword(new String[]{"neg"});
     public static final Keyword SEQZ = new Keyword(new String[]{"seqz"});
     public static final Keyword SNEZ = new Keyword(new String[]{"snez"});
@@ -357,6 +358,38 @@ public class Syntax
         for (Register value : registers) if (value.is(register)) return value.address;
         return -1;
     }
+
+    public static class Base
+    {
+        final int b;
+        final String[] id;
+        public Base(int b, String[] id)
+        {
+            this.b = b;
+            this.id = id;
+        }
+        public boolean contains_id(String id)
+        {
+            for(String i : this.id)if(id.contains(i))return true;
+            return false;
+        }
+    }
+    public static final Base DEFAULT_BASE = new Base(10,new String[]{"d"});
+    public static final List<Base> bases = get_bases();
+    private static List<Base> get_bases()
+    {
+        List<Base> l = new ArrayList<>(); // capital letters represent digits after 9
+        l.add(new Base(2,new String[]{"b"}));
+        l.add(new Base(8,new String[]{"o"}));
+        l.add(new Base(16,new String[]{"h","x"}));
+        l.add(DEFAULT_BASE);
+        return l;
+    }
+    public static int get_base_of(String num)
+    {
+        for(Base b: bases)if(b.contains_id(num))return b.b;
+        return DEFAULT_BASE.b;
+    }
     
     
     public static boolean is_number(char ch)
@@ -380,6 +413,14 @@ public class Syntax
     }
     public static boolean is_label(String s)
     {
-        return LABEL_TERMINATOR.equals(s.charAt(s.length() - 1) + "") && is_identifier(s.substring(0, s.length() - 1));
+        return LABEL_TERMINATOR.equals(s.charAt(s.length() - 1) + "");
+    }
+    public static boolean is_valid_label(String s)
+    {
+        return is_label(s) && is_identifier(s.substring(0, s.length() - 1));
+    }
+    public static boolean is_data_type(String s)
+    {
+        return DATATYPE_INITIATOR.equals(""+s.charAt(0));
     }
 }
